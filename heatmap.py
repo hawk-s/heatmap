@@ -25,33 +25,48 @@ data['net_worth'] = data['net_worth'].str.replace('$', '').str.replace(' Billion
 
 #print(data['net_worth'])
 
-# Group the data by country and calculate the total net worth for each country
+#group the data by country+ calculate the total net worth for each country:
 grouped_data = data.groupby('country')['net_worth'].sum().reset_index()
 
 #print(grouped_data)
 
-# Load the world map shapefile
+#mapping country names to match the naturalearth_lowres dataset:
+country_name_map = {
+    'United States': 'United States of America',
+    'Czech Republic': 'Czechia'
+}
+
+grouped_data['country'] = grouped_data['country'].map(country_name_map).fillna(grouped_data['country'])
+
+
+#loading the world map shapefile:
 world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
 
 #print(world['name'])
 
-# Merge the data with the world map based on the country name
+#merging the data with the world map based on the country name:
 merged_data = world.merge(grouped_data, left_on='name', right_on='country', how='left')
 
 #print(merged_data)
 
-# Fill NaN values with a default value (e.g., 0):
+#filling Nan values with 0:
 merged_data['net_worth'] = merged_data['net_worth'].fillna(0)
 #♥print(merged_data)
 
-# Plot the heatmap using Plotly
-fig = px.choropleth(merged_data, locations='iso_a3', color='net_worth',
-                    hover_name='name', projection='natural earth')
+fig = px.choropleth(
+    merged_data,
+    locations='iso_a3',
+    color='net_worth',
+    hover_name='name',
+    projection='natural earth',
+    color_continuous_scale='amp',
+    range_color=(0, merged_data['net_worth'].max()),  #setting the range of the color scale
+)
 
 #print(fig)
 
 fig.update_geos(showcountries=True, countrycolor='gray', showcoastlines=True, coastlinecolor='gray')
 
 #print(fig)
-# Show the heatmap
+#show the heatmap:
 fig.show()
